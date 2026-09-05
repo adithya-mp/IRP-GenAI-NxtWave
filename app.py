@@ -1,5 +1,8 @@
 import os
 import tempfile
+import io
+import wave
+import base64
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -10,6 +13,17 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
 client = genai.Client(api_key=api_key)
+
+def pcm_to_wav_bytes(pcm_data):
+    buffer = io.BytesIO()
+
+    with wave.open(buffer, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(24000)
+        wf.writeframes(pcm_data)
+
+    return buffer.getvalue()
 
 st.title("🎤 AI Voice Language Tutor")
 
@@ -91,8 +105,34 @@ Explanation:
 
         feedback = feedback_response.text
 
+        corrected_sentence = feedback.split("Corrected Sentence:", 1)[1].split("Grammar:", 1)[0].strip()
+
         st.subheader("🤖 AI Tutor Feedback")
         st.write(feedback)
+
+        st.subheader("🔊 Corrected Sentence")
+        st.write(corrected_sentence)
+
+        st.info("🔊 Generating pronunciation...")
+
+        tts_interaction = client.interactions.create(
+            model="gemini-3.1-flash-tts-preview",
+            input=corrected_sentence,
+            response_format={"type": "audio"},
+            generation_config={
+                "speech_config": [
+                    {"voice": "Kore"}
+                ]
+            }
+        )
+
+        audio_data = base64.b64decode(
+            tts_interaction.output_audio.data
+        )
+
+        wav_audio = pcm_to_wav_bytes(audio_data)
+
+        st.audio(wav_audio, format="audio/wav")
 
     except Exception as e:
         st.error(f"Error: {e}")
