@@ -27,6 +27,11 @@ def pcm_to_wav_bytes(pcm_data):
 
 st.title("🎤 AI Voice Language Tutor")
 
+target_language = st.selectbox(
+    "🌍 Choose target language",
+    ["English", "Hindi", "Spanish", "French", "German"]
+)
+
 st.write("Speak a sentence and the AI will transcribe it.")
 
 audio = st.audio_input(
@@ -75,7 +80,7 @@ if audio:
         feedback_response = client.models.generate_content(
             model="gemini-3.6-flash",
             contents=f"""
-You are an English language tutor.
+You are a {target_language} language tutor.
 
 Analyze the learner's sentence:
 
