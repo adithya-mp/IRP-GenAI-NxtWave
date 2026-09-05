@@ -26,6 +26,7 @@ def pcm_to_wav_bytes(pcm_data):
     return buffer.getvalue()
 
 st.title("🎤 AI Voice Language Tutor")
+st.caption("Speak • Get AI-powered corrections • Listen and learn")
 
 target_language = st.selectbox(
     "🌍 Choose target language",
