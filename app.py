@@ -27,7 +27,6 @@ if audio:
 
     st.info("🎧 Transcribing your sentence...")
 
-    # Save recording as a temporary WAV file
     with tempfile.NamedTemporaryFile(
         delete=False,
         suffix=".wav"
@@ -37,12 +36,10 @@ if audio:
         temp_audio_path = temp_audio.name
 
     try:
-        # Upload audio to Gemini
         audio_file = client.files.upload(
             file=temp_audio_path
         )
 
-        # Transcribe using Gemini 3.5 Transcribe
         interaction = client.interactions.create(
             model="gemini-3.5-transcribe",
             input=[
@@ -59,8 +56,46 @@ if audio:
         st.subheader("📝 Your Sentence")
         st.write(transcription)
 
+        st.info("🤖 Analyzing your sentence...")
+
+        feedback_response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=f"""
+You are an English language tutor.
+
+Analyze the learner's sentence:
+
+"{transcription}"
+
+Check:
+1. Grammar mistakes
+2. Vocabulary and word-choice mistakes
+3. Give the corrected sentence
+4. Give a short and simple explanation for a beginner.
+
+Use exactly this format:
+
+Corrected Sentence:
+<corrected sentence>
+
+Grammar:
+<grammar feedback>
+
+Vocabulary:
+<vocabulary feedback>
+
+Explanation:
+<simple explanation>
+"""
+        )
+
+        feedback = feedback_response.text
+
+        st.subheader("🤖 AI Tutor Feedback")
+        st.write(feedback)
+
     except Exception as e:
-        st.error(f"Transcription error: {e}")
+        st.error(f"Error: {e}")
 
     finally:
         os.remove(temp_audio_path)
